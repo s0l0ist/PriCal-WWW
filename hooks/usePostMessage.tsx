@@ -1,5 +1,11 @@
 import React from 'react'
 
+/**
+ * We define the window global to have the additional
+ * `ReactNativeWebView` property that is injected
+ * when the web app is loaded in a react-native (expo)
+ * environment
+ */
 declare global {
   interface Window {
     ReactNativeWebView: {

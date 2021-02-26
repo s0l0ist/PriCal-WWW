@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar'
 import React from 'react'
-import { Button, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 
 import useMessageEvent from './hooks/useMessageEvent'
 import usePostMessage from './hooks/usePostMessage'
@@ -52,7 +52,7 @@ export default function App() {
     createServerResponse,
     computeIntersection
   } = usePsi()
-  const { postMessage, postMessageReactNative } = usePostMessage()
+  const { postMessageReactNative } = usePostMessage()
 
   /**
    * Set up our listener hook that captures messages sent
@@ -124,32 +124,11 @@ export default function App() {
     })()
   }, [command, createClientRequest, createServerResponse, computeIntersection])
 
-  const onSubmit = () => {
-    console.log('posting data')
-    const command = {
-      id: 'asdf',
-      type: PSI_MESSAGE_TYPES.CREATE_REQUEST,
-      payload: {
-        grid: []
-      }
-    } as PSI_CREATE_REQUEST_COMMAND
-
-    postMessage({
-      message: JSON.stringify(command),
-      targetOrigin: '*'
-    })
-    postMessageReactNative({
-      message: 'More data!'
-    })
-  }
   return (
     <View style={styles.container}>
-      <Button onPress={onSubmit} title={'Post Message'} />
-
       <Text>
         PriCal's static site for providing WASM accelerated PSI capability
       </Text>
-      <Text>{JSON.stringify(command)}</Text>
       <StatusBar style="auto" />
     </View>
   )

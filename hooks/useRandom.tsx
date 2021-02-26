@@ -71,7 +71,8 @@ export default function useRandom() {
 
   /**
    * Here, we define a polyfill for `crypto.getRandomValues` which is
-   * used for some modules such as `@openmined/psi.js`
+   * used for some modules such as `@openmined/psi.js`. This is not
+   * needed if this module is loaded in a browser context.
    */
   if (typeof crypto !== 'object') {
     // @ts-ignore
