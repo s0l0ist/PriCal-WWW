@@ -15,7 +15,28 @@ import useRandom from './useRandom'
  */
 type base64 = string
 
-export type Context = {
+/**
+ * Prop types for our APIs
+ */
+export type ClientRequestProps = {
+  grid: string[]
+}
+
+export type ServerResponseProps = {
+  request: base64
+  grid: string[]
+}
+
+export type ComputeIntersectionProps = {
+  key: base64
+  response: base64
+  setup: base64
+}
+
+/**
+ * Return types for our APIs
+ */
+export type ClientRequest = {
   contextId: string
   privateKey: base64
   clientRequest: base64
@@ -36,64 +57,58 @@ export type Intersection = {
  * This file holds our module's PSI WASM instance. There should ever only be
  * a single instance throughout the application lifetime. This is tracked using `psiRef`
  *
- * Initiating the PSI protocol with a createClientRequest
- * generates an contextId which will be used to reference the
+ * Initiating the PSI protocol by calling `createClientRequest`
+ * generates an contextId which is metadata that will be used to reference the
  * client's private key used in the transaction.
  *
- * Ex: A client makes a request to another client (server) via push notification.
- * When the server has responded, the client will be notified via another push notification
- * and will lookup up the private key that was used in the original request, create a
- * new client instance with the key, and compute the intersection.
+ * Ex: Alice (client) makes a request to John (server).
+ * When the John has responded, the Alice will need to
+ * lookup up the private key that was used in the original request
+ * in order to compute the intersection.
  */
 export default function usePsi() {
   const psiRef = React.useRef<PSILibrary>()
   const { getRandomString, getRandomBytes } = useRandom()
 
   /**
-   * Deserializes and returns an instance of a [Client] Response
-   * @param binary Serialized Response
+   * Deserializes and returns an instance of a [Client] Request
    */
-  const deserializeResponse = React.useCallback(
-    (response: base64): Response => {
-      return psiRef.current!.response.deserializeBinary(
-        Base64.toByteArray(response)
-      )
-    },
+  const deserializeRequest = React.useCallback(
+    (request: base64): Request =>
+      psiRef.current!.request.deserializeBinary(Base64.toByteArray(request)),
     []
   )
 
   /**
-   * Deserializes and returns an instance of a [Server] Request
-   * @param binary Serialized Request
+   * Deserializes and returns an instance of a [Server] Response
    */
-  const deserializeRequest = React.useCallback((request: base64): Request => {
-    return psiRef.current!.request.deserializeBinary(
-      Base64.toByteArray(request)
-    )
-  }, [])
+  const deserializeResponse = React.useCallback(
+    (response: base64): Response =>
+      psiRef.current!.response.deserializeBinary(Base64.toByteArray(response)),
+    []
+  )
 
   /**
    * Deserializes and returns an instance of a [Server] ServerSetup
-   * @param binary Serialized ServerResponse
    */
   const deserializeServerSetup = React.useCallback(
-    (setup: base64): ServerSetup => {
-      return psiRef.current!.serverSetup.deserializeBinary(
-        Base64.toByteArray(setup)
-      )
-    },
+    (setup: base64): ServerSetup =>
+      psiRef.current!.serverSetup.deserializeBinary(Base64.toByteArray(setup)),
     []
   )
 
   /**
    * [Acting as a Client] Encrypts a grid and returns the serialized client request
-   * @param grid The time-grid to encrypt
    */
   const createClientRequest = React.useCallback(
-    ({ grid }: { grid: string[] }) => {
+    ({ grid }: ClientRequestProps): ClientRequest => {
       const contextId = getRandomString(4)
-      // We provide our own random key as the PSI library has issues
-      // with react-native
+      // In a typical Browser or NodeJS environment, it is sufficient to
+      // call `psiRef.current!.client!.createWithNewKey(true)` as the library will
+      // use the appropriate CSPRNG for the given environment. However, we show a more
+      // flexible option that will work in the event the environment is not able to
+      // automatically use a CSPRNG. We use a wrapper around expo-random to generate a
+      // random key for maximum cross-platform compatability.
       const client = psiRef.current!.client!.createFromKey(
         getRandomBytes(32),
         true
@@ -110,7 +125,7 @@ export default function usePsi() {
         contextId,
         privateKey,
         clientRequest
-      } as Context
+      }
     },
     []
   )
@@ -118,12 +133,9 @@ export default function usePsi() {
   /**
    * [Acting as a Server] Processes the client request and returns both an
    * encrypted server response and server setup generated from a time-grid
-   *
-   * @param request The client request
-   * @param grid The time-grid to generate the setup
    */
   const createServerResponse = React.useCallback(
-    ({ request, grid }: { request: base64; grid: string[] }) => {
+    ({ request, grid }: ServerResponseProps): ServerResponse => {
       const clientRequest = deserializeRequest(request)
       // We provide our own random key as the PSI library has issues
       // with react-native
@@ -151,7 +163,7 @@ export default function usePsi() {
       return {
         serverResponse,
         serverSetup
-      } as ServerResponse
+      }
     },
     []
   )
@@ -159,37 +171,28 @@ export default function usePsi() {
   /**
    * [Acting as a Client] Computes the (private) intersection from the
    * server's response and the original client's request
-   * @param contextId
-   * @param response
-   * @param serverSetup
    */
   const computeIntersection = React.useCallback(
-    ({
-      key,
-      response,
-      setup
-    }: {
-      key: base64
-      response: base64
-      setup: base64
-    }) => {
+    ({ key, response, setup }: ComputeIntersectionProps): Intersection => {
       const privateKey = Base64.toByteArray(key)
       const client = psiRef.current!.client!.createFromKey(privateKey, true)
       const serverResponse = deserializeResponse(response)
       const serverSetup = deserializeServerSetup(setup)
       const intersection = client.getIntersection(serverSetup, serverResponse)
-      client.delete()
-      intersection.sort((a, b) => a - b)
 
+      // Always destroy the client instance to prevent WASM heap buildup
+      client.delete()
+
+      intersection.sort((a, b) => a - b)
       return {
         intersection
-      } as Intersection
+      }
     },
     []
   )
 
   /**
-   * Effect: On mount, initialize the PSI library and set the state
+   * Effect: On mount, initialize the PSI library and set the ref
    */
   React.useEffect(() => {
     ;(async () => {
@@ -201,11 +204,13 @@ export default function usePsi() {
     })()
   }, [])
 
-  return React.useMemo(() => {
-    return {
-      createClientRequest,
-      createServerResponse,
-      computeIntersection
-    } as const
-  }, [createClientRequest, createServerResponse, computeIntersection])
+  return React.useMemo(
+    () =>
+      ({
+        createClientRequest,
+        createServerResponse,
+        computeIntersection
+      } as const),
+    [createClientRequest, createServerResponse, computeIntersection]
+  )
 }

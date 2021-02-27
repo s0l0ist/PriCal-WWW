@@ -4,9 +4,13 @@ import { StyleSheet, Text, View } from 'react-native'
 
 import useMessageEvent from './hooks/useMessageEvent'
 import usePostMessage from './hooks/usePostMessage'
-import usePsi from './hooks/usePsi'
+import usePsi, {
+  ClientRequestProps,
+  ComputeIntersectionProps,
+  ServerResponseProps
+} from './hooks/usePsi'
 
-enum PSI_MESSAGE_TYPES {
+enum PSI_COMMAND_TYPES {
   CREATE_REQUEST = 'CREATE_REQUEST',
   CREATE_RESPONSE = 'CREATE_RESPONSE',
   COMPUTE_INTERSECTION = 'COMPUTE_INTERSECTION'
@@ -14,29 +18,20 @@ enum PSI_MESSAGE_TYPES {
 
 interface PSI_CREATE_REQUEST_COMMAND {
   id: string
-  type: PSI_MESSAGE_TYPES.CREATE_REQUEST
-  payload: {
-    grid: string[]
-  }
+  type: PSI_COMMAND_TYPES.CREATE_REQUEST
+  payload: ClientRequestProps
 }
 
 interface PSI_CREATE_RESPONSE_COMMAND {
   id: string
-  type: PSI_MESSAGE_TYPES.CREATE_RESPONSE
-  payload: {
-    request: string
-    grid: string[]
-  }
+  type: PSI_COMMAND_TYPES.CREATE_RESPONSE
+  payload: ServerResponseProps
 }
 
 interface PSI_COMPUTE_INTERSECTION_COMMAND {
   id: string
-  type: PSI_MESSAGE_TYPES.COMPUTE_INTERSECTION
-  payload: {
-    key: string
-    response: string
-    setup: string
-  }
+  type: PSI_COMMAND_TYPES.COMPUTE_INTERSECTION
+  payload: ComputeIntersectionProps
 }
 
 type COMMAND =
@@ -60,6 +55,7 @@ export default function App() {
    */
   useMessageEvent((event: MessageEvent) => {
     try {
+      console.log('got message')
       const command = JSON.parse(event.data) as COMMAND
       setCommand(command)
     } catch (err) {
@@ -70,11 +66,10 @@ export default function App() {
   /**
    * Define our function to send messages back to react-native
    */
-  const sendToReact = React.useCallback(
-    (payload: any) =>
-      postMessageReactNative({ message: JSON.stringify(payload) }),
-    []
-  )
+  const sendToReact = React.useCallback(function sendToReact<T>(payload: T) {
+    console.log('sending to react')
+    postMessageReactNative({ message: JSON.stringify(payload) })
+  }, [])
 
   /**
    * Define our handlers for our PSI library
@@ -106,22 +101,20 @@ export default function App() {
    * PSI request
    */
   React.useEffect(() => {
-    ;(async () => {
-      if (command) {
-        console.log('Received Command', command.type)
-        switch (command.type) {
-          case PSI_MESSAGE_TYPES.CREATE_REQUEST:
-            return handleClientRequest(command)
-          case PSI_MESSAGE_TYPES.CREATE_RESPONSE:
-            return handleServerResponse(command)
-          case PSI_MESSAGE_TYPES.COMPUTE_INTERSECTION:
-            return handleGetIntersection(command)
-          default:
-            console.warn('Command not found!')
-            break
-        }
+    if (command) {
+      console.log('got command', command.type)
+      switch (command.type) {
+        case PSI_COMMAND_TYPES.CREATE_REQUEST:
+          return handleClientRequest(command)
+        case PSI_COMMAND_TYPES.CREATE_RESPONSE:
+          return handleServerResponse(command)
+        case PSI_COMMAND_TYPES.COMPUTE_INTERSECTION:
+          return handleGetIntersection(command)
+        default:
+          console.warn('Command not found!')
+          break
       }
-    })()
+    }
   }, [command, createClientRequest, createServerResponse, computeIntersection])
 
   return (
