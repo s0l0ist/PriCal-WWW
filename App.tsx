@@ -16,19 +16,19 @@ enum PSI_COMMAND_TYPES {
   COMPUTE_INTERSECTION = 'COMPUTE_INTERSECTION'
 }
 
-interface PSI_CREATE_REQUEST_COMMAND {
+type PSI_CREATE_REQUEST_COMMAND = {
   id: string
   type: PSI_COMMAND_TYPES.CREATE_REQUEST
   payload: ClientRequestProps
 }
 
-interface PSI_CREATE_RESPONSE_COMMAND {
+type PSI_CREATE_RESPONSE_COMMAND = {
   id: string
   type: PSI_COMMAND_TYPES.CREATE_RESPONSE
   payload: ServerResponseProps
 }
 
-interface PSI_COMPUTE_INTERSECTION_COMMAND {
+type PSI_COMPUTE_INTERSECTION_COMMAND = {
   id: string
   type: PSI_COMMAND_TYPES.COMPUTE_INTERSECTION
   payload: ComputeIntersectionProps
