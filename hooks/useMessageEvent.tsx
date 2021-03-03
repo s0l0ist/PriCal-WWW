@@ -7,5 +7,5 @@ export default function useMessageEvent(listener: {
   (event: MessageEvent): void
   (this: Window, ev: MessageEvent<any>): any
 }) {
-  useWindowEvent('message', listener)
+  return useWindowEvent('message', listener)
 }
