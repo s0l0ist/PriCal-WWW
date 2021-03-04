@@ -18,6 +18,10 @@ type base64 = string
 /**
  * Prop types for our APIs
  */
+export type InitializedProps = {
+  initialized: boolean
+}
+
 export type ClientRequestProps = {
   grid: string[]
 }
@@ -51,6 +55,9 @@ export type Intersection = {
   intersection: number[]
 }
 
+type PsiProps = {
+  initializedPsi: (payload: InitializedProps) => void
+}
 /**
  * Define our PSI library helpers
  *
@@ -66,7 +73,7 @@ export type Intersection = {
  * lookup up the private key that was used in the original request
  * in order to compute the intersection.
  */
-export default function usePsi() {
+export default function usePsi({ initializedPsi }: PsiProps) {
   const psiRef = React.useRef<PSILibrary>()
   const { getRandomString, getRandomBytes } = useRandom()
 
@@ -197,9 +204,8 @@ export default function usePsi() {
   React.useEffect(() => {
     ;(async () => {
       if (!psiRef.current) {
-        console.log('psi loading...')
         psiRef.current = await PSI()
-        console.log('psi loading...done')
+        initializedPsi({ initialized: true })
       }
     })()
   }, [])

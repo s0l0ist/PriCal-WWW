@@ -5,15 +5,22 @@ import { StyleSheet, Text, View } from 'react-native'
 import useMessageEvent from './hooks/useMessageEvent'
 import usePostMessage from './hooks/usePostMessage'
 import usePsi, {
+  InitializedProps,
   ClientRequestProps,
   ComputeIntersectionProps,
   ServerResponseProps
 } from './hooks/usePsi'
 
 enum PSI_COMMAND_TYPES {
+  INITIALIZED = 'INITIALIZED',
   CREATE_REQUEST = 'CREATE_REQUEST',
   CREATE_RESPONSE = 'CREATE_RESPONSE',
   COMPUTE_INTERSECTION = 'COMPUTE_INTERSECTION'
+}
+
+type PSI_INITIALIZED_COMMAND = {
+  type: PSI_COMMAND_TYPES.INITIALIZED
+  payload: InitializedProps
 }
 
 type PSI_CREATE_REQUEST_COMMAND = {
@@ -35,18 +42,13 @@ type PSI_COMPUTE_INTERSECTION_COMMAND = {
 }
 
 type COMMAND =
+  | PSI_INITIALIZED_COMMAND
   | PSI_CREATE_REQUEST_COMMAND
   | PSI_CREATE_RESPONSE_COMMAND
   | PSI_COMPUTE_INTERSECTION_COMMAND
 
 export default function App() {
   const [command, setCommand] = React.useState<COMMAND>()
-
-  const {
-    createClientRequest,
-    createServerResponse,
-    computeIntersection
-  } = usePsi()
   const { postMessageReactNative } = usePostMessage()
 
   /**
@@ -55,11 +57,11 @@ export default function App() {
    */
   useMessageEvent((event: MessageEvent) => {
     try {
-      console.log('got message')
       const command = JSON.parse(event.data) as COMMAND
       setCommand(command)
     } catch (err) {
-      console.warn('Unable to process message!')
+      // Errors will typically happen when debugging
+      // as react-devtools sends messages that aren't JSON
     }
   })
 
@@ -67,9 +69,21 @@ export default function App() {
    * Define our function to send messages back to react-native
    */
   const sendToReact = React.useCallback(function sendToReact<T>(payload: T) {
-    console.log('sending to react')
     postMessageReactNative({ message: JSON.stringify(payload) })
   }, [])
+
+  /**
+   * Initialize our PSI library. We provide a prop which sends a message
+   * to the WebView in react-native that the PSI library has initialized.
+   *
+   * If omitted, we risk the mobile app sending PSI commands when the library
+   * was not initialized.
+   */
+  const {
+    createClientRequest,
+    createServerResponse,
+    computeIntersection
+  } = usePsi({ initializedPsi: payload => sendToReact(payload) })
 
   /**
    * Define our handlers for our PSI library
@@ -102,7 +116,6 @@ export default function App() {
    */
   React.useEffect(() => {
     if (command) {
-      console.log('got command', command.type)
       switch (command.type) {
         case PSI_COMMAND_TYPES.CREATE_REQUEST:
           return handleClientRequest(command)
@@ -111,7 +124,7 @@ export default function App() {
         case PSI_COMMAND_TYPES.COMPUTE_INTERSECTION:
           return handleGetIntersection(command)
         default:
-          console.warn('Command not found!')
+          console.error('Command not found!', command)
           break
       }
     }
