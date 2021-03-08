@@ -1613,10 +1613,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@openmined/psi.js@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@openmined/psi.js/-/psi.js-0.3.2.tgz#3e58ffc5283dd8e41f602ba67c9ca4af228413e5"
-  integrity sha512-4k3Soagrxl4ovGEzKgI+yfIkZ+cI8O7YzyVjUlcxEIPjn7asdP9CPfEHVszCYL8Cll1prOK1VLWRysNs5FUXLA==
+"@openmined/psi.js@^0.3.5":
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/@openmined/psi.js/-/psi.js-0.3.5.tgz#9c75ecd7e4b79939d32336ca07d5b13fe6e08668"
+  integrity sha512-+TqXZDjCdu95vh+97QMdfpZNK+r4Zt0JjT7WJMFffG6VefoaGREbiwjwRrra4glfPZ+P3bQeOwZAAFxv+nxL0w==
 
 "@react-native-community/cli-debugger-ui@^4.13.1":
   version "4.13.1"
