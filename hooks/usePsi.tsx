@@ -8,6 +8,7 @@ import { PSILibrary } from '@openmined/psi.js/implementation/psi'
 import * as Base64 from 'base64-js'
 import * as React from 'react'
 
+import { PSI_COMMAND_TYPES, PSI_INITIALIZED_COMMAND } from '../App'
 import useRandom from './useRandom'
 
 /**
@@ -56,7 +57,7 @@ export type Intersection = {
 }
 
 type PsiProps = {
-  initializedPsi: (payload: InitializedProps) => void
+  initializedPsi: (payload: PSI_INITIALIZED_COMMAND) => void
 }
 /**
  * Define our PSI library helpers
@@ -205,7 +206,13 @@ export default function usePsi({ initializedPsi }: PsiProps) {
     ;(async () => {
       if (!psiRef.current) {
         psiRef.current = await PSI()
-        initializedPsi({ initialized: true })
+        initializedPsi({
+          id: PSI_COMMAND_TYPES.INITIALIZED,
+          type: PSI_COMMAND_TYPES.INITIALIZED,
+          payload: {
+            initialized: true
+          }
+        })
       }
     })()
   }, [])

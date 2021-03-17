@@ -11,14 +11,15 @@ import usePsi, {
   ServerResponseProps
 } from './hooks/usePsi'
 
-enum PSI_COMMAND_TYPES {
+export enum PSI_COMMAND_TYPES {
   INITIALIZED = 'INITIALIZED',
   CREATE_REQUEST = 'CREATE_REQUEST',
   CREATE_RESPONSE = 'CREATE_RESPONSE',
   COMPUTE_INTERSECTION = 'COMPUTE_INTERSECTION'
 }
 
-type PSI_INITIALIZED_COMMAND = {
+export type PSI_INITIALIZED_COMMAND = {
+  id: string
   type: PSI_COMMAND_TYPES.INITIALIZED
   payload: InitializedProps
 }
