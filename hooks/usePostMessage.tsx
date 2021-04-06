@@ -15,38 +15,35 @@ declare global {
 }
 
 /**
- * Define a hook that provides functions to send messages
+ * Define a hook that provides functions to posts messages
  * to the react-native application -or- the local window for debugging
  */
 export default function usePostMessage() {
   const postMessage = React.useCallback(
     ({
       message,
-      targetOrigin,
+      targetOrigin = '*',
       transfer
     }: {
       message: string
-      targetOrigin: string
+      targetOrigin?: string
       transfer?: Transferable[]
-    }) => window.postMessage(message, targetOrigin, transfer),
-    []
-  )
-  const postMessageReactNative = React.useCallback(
-    ({ message }: { message: string }) => {
-      if (!window.ReactNativeWebView) {
-        console.warn('window.ReactNativeWebView not available')
-        return
+    }) => {
+      // If rendered in a React-native WebView, this function is added
+      // to the window and we should use it.
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(message)
       }
-      return window.ReactNativeWebView.postMessage(message)
+      window.postMessage(message, targetOrigin, transfer)
     },
     []
   )
+
   return React.useMemo(
     () =>
       ({
-        postMessage,
-        postMessageReactNative
+        postMessage
       } as const),
-    [postMessage, postMessageReactNative]
+    [postMessage]
   )
 }
