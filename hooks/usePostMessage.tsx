@@ -33,6 +33,7 @@ export default function usePostMessage() {
       // to the window and we should use it.
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(message)
+        return
       }
       window.postMessage(message, targetOrigin, transfer)
     },

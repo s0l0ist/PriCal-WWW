@@ -135,7 +135,13 @@ export default function App() {
           return handleUnknownCommand(command)
       }
     }
-  }, [command, createClientRequest, createServerResponse, computeIntersection])
+  }, [
+    command,
+    handleClientRequest,
+    handleServerResponse,
+    handleGetIntersection,
+    handleUnknownCommand
+  ])
 
   /**
    * Effect: send any uncaught errors back to the client
